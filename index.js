@@ -22,18 +22,29 @@ const client = new MongoClient(uri, {
 });
 async function run() {
   try {
-    const productsCollection = client.db("products_DB").collection("products");
+    const db = client.db("products_DB");
+    const productsCollection = db.collection("products");
+    const bidsCollection = db.collection("bids");
+
     // Connect the client to the server	(optional starting in v4.7)
 
     // get product from db
     app.get("/products", async (req, res) => {
-      const projectFields = { title: 1, price_max: 1, price_min: 1, image: 1 };
-      const cursor = productsCollection
-        .find()
-        .sort({ price_min: 1 })
-        .skip(1)
-        .limit(2)
-        .project(projectFields);
+      // sort data
+      // const projectFields = { title: 1, price_max: 1, price_min: 1, image: 1 };
+      // const cursor = productsCollection
+      //   .find()
+      //   .sort({ price_min: 1 })
+      //   .skip(1)
+      //   .limit(2)
+      //   .project(projectFields);
+
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.email = email;
+      }
+      const cursor = productsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -73,6 +84,45 @@ async function run() {
       const id = req.params.id;
       const product = { _id: new ObjectId(id) };
       const result = await productsCollection.deleteOne(product);
+      res.send(result);
+    });
+
+    // get bids related api from bids
+
+    // get all bids from db
+    app.get("/bids", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.bidder_email = email;
+      }
+      const cursor = bidsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get single bid from db
+    app.get("/bids/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const result = await bidsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // post bids to db
+    app.post("/bids", async (req, res) => {
+      const newBids = req.body;
+      const result = await bidsCollection.insertOne(newBids);
+      res.send(result);
+    });
+
+    
+
+    // delete bids from db
+    app.delete("/bids/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const result = await bidsCollection.deleteOne(query);
       res.send(result);
     });
 
