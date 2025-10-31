@@ -27,7 +27,14 @@ async function run() {
 
     // get product from db
     app.get("/products", async (req, res) => {
-      const result = await productsCollection.find().toArray();
+      const projectFields = { title: 1, price_max: 1, price_min: 1, image: 1 };
+      const cursor = productsCollection
+        .find()
+        .sort({ price_min: 1 })
+        .skip(1)
+        .limit(2)
+        .project(projectFields);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
@@ -53,8 +60,8 @@ async function run() {
       const updatedProduct = req.body;
       const updateDoc = {
         $set: {
-          title: updatedProduct.title,
-          price: updatedProduct.price,
+          name: updatedProduct.name,
+          slug: updatedProduct.slug,
         },
       };
       const result = await productsCollection.updateOne(query, updateDoc);
