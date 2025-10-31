@@ -25,10 +25,39 @@ async function run() {
     const productsCollection = client.db("products_DB").collection("products");
     // Connect the client to the server	(optional starting in v4.7)
 
-    // post product db
+    // get product from db
+    app.get("/products", async (req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
+    });
+
+    // get single product form db
+    app.get("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // post product to db
     app.post("/products", async (req, res) => {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
+      res.send(result);
+    });
+
+    // update product from db
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedProduct = req.body;
+      const updateDoc = {
+        $set: {
+          title: updatedProduct.title,
+          price: updatedProduct.price,
+        },
+      };
+      const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
