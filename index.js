@@ -25,6 +25,7 @@ async function run() {
     const db = client.db("products_DB");
     const productsCollection = db.collection("products");
     const bidsCollection = db.collection("bids");
+    const usersCollection = db.collection("users");
 
     // Connect the client to the server	(optional starting in v4.7)
 
@@ -57,6 +58,12 @@ async function run() {
       res.send(result);
     });
 
+    // get latest product sort(create_at time)
+    app.get("/latest-products", async (req, res) => {
+      const query = productsCollection.find().sort({ created_at: -1 }).limit(8);
+      const result = await query.toArray();
+      res.send(result);
+    });
     // post product to db
     app.post("/products", async (req, res) => {
       const newProduct = req.body;
@@ -88,13 +95,12 @@ async function run() {
     });
 
     // get bids related api from bids
-
     // get all bids from db
     app.get("/bids", async (req, res) => {
-      const email = req.query.email;
       const query = {};
+      const email = req.query.email;
       if (email) {
-        query.bidder_email = email;
+        query.email = email;
       }
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
@@ -109,6 +115,15 @@ async function run() {
       res.send(result);
     });
 
+    // get bids by id from db
+    app.get("/products/bids/:productId", async (req, res) => {
+      const id = req.params.id;
+      const query = { product: id };
+      const cursor = bidsCollection.find(query).sort({ price_min: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     // post bids to db
     app.post("/bids", async (req, res) => {
       const newBids = req.body;
@@ -116,14 +131,28 @@ async function run() {
       res.send(result);
     });
 
-    
-
-    // delete bids from db
+    // delete single bids
     app.delete("/bids/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: id };
+      const query = { _id: new ObjectId(id) };
       const result = await bidsCollection.deleteOne(query);
       res.send(result);
+    });
+
+    //get user related api from db
+
+    //post users to db
+    app.post("/users", async (req, res) => {
+      const newUsers = req.body;
+      const email = req.body.email;
+      const query = { email: email };
+      const existingEmail = await usersCollection.findOne(query);
+      if (existingEmail) {
+        res.send("This User Already Exist in this site");
+      } else {
+        const result = await usersCollection.insertOne(newUsers);
+        res.send(result);
+      }
     });
 
     // get product from db
