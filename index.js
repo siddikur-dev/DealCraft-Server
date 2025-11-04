@@ -33,7 +33,7 @@ const verifyFBToken = async (req, res, next) => {
   // verify id token
   try {
     const tokenInfo = await admin.auth().verifyIdToken(token);
-    console.log(tokenInfo);
+    req.token_email = tokenInfo.email;
     next();
   } catch {
     return res.status(401).send({ message: "un authorized access catch" });
@@ -134,7 +134,12 @@ async function run() {
     app.get("/bids", logger, verifyFBToken, async (req, res) => {
       const query = {};
       const email = req.query.email;
+      console.log("token mail", req.token_email);
+      console.log("just mail", email);
       if (email) {
+        if (email !== req.token_email) {
+          return res.status(403).send({ message: "Forbidden Access " });
+        }
         query.email = email;
       }
       const cursor = bidsCollection.find(query);
@@ -151,7 +156,7 @@ async function run() {
     });
 
     // get bids by id from db
-    app.get("/products/bids/:productId", async (req, res) => {
+    app.get("/products/bids/:productId", verifyFBToken, async (req, res) => {
       const id = req.params.id;
       const query = { product: id };
       const cursor = bidsCollection.find(query).sort({ price_min: -1 });
