@@ -101,6 +101,8 @@ async function run() {
       //   .limit(2)
       //   .project(projectFields);
 
+      console.log("headers in the post", req.headers);
+
       const email = req.query.email;
       const query = {};
       if (email) {
