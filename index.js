@@ -9,7 +9,25 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-//
+const logger = (req, res, next) => {
+  console.log("logging info");
+  next();
+};
+
+const verifyFBToken = (req, res, next) => {
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: "Unauthorized Access" });
+  }
+  console.log("call ho mama");
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access" });
+  }
+  // verify token here
+  next();
+};
+
+//-
 //
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASS}@cluster0.rfkbq1n.mongodb.net/?appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -100,13 +118,12 @@ async function run() {
 
     // get bids related api from bids
     // get all bids from db
-    app.get("/bids", async (req, res) => {
+    app.get("/bids", logger, verifyFBToken, async (req, res) => {
       const query = {};
       const email = req.query.email;
       if (email) {
         query.email = email;
       }
-      console.log("headers", req.headers);
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
