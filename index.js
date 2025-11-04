@@ -60,7 +60,10 @@ async function run() {
 
     // get latest product sort(create_at time)
     app.get("/latest-products", async (req, res) => {
-      const query = productsCollection.find().sort({ created_at: -1 }).limit(8);
+      const query = productsCollection
+        .find()
+        .sort({ price_max: "descending" })
+        .limit(6);
       const result = await query.toArray();
       res.send(result);
     });
@@ -68,6 +71,7 @@ async function run() {
     app.post("/products", async (req, res) => {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
+      console.log(result);
       res.send(result);
     });
 
@@ -102,6 +106,7 @@ async function run() {
       if (email) {
         query.email = email;
       }
+      console.log("headers", req.headers);
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
@@ -141,6 +146,23 @@ async function run() {
 
     //get user related api from db
 
+    app.get("/users", async (req, res) => {
+      const query = req.body;
+      const cursor = bidsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get specific user
+    app.get("/users/:id", async (req, res) => {
+      console.log("headers", req.headers);
+
+      const id = req.params.id;
+      const query = { email: id };
+      const cursor = usersCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     //post users to db
     app.post("/users", async (req, res) => {
       const newUsers = req.body;
