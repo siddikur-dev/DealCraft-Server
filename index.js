@@ -161,34 +161,34 @@ async function run() {
 
     // get bids related api from bids
     // get all bids from db verify Firebase Token
-    // app.get("/bids", logger, verifyFBToken, async (req, res) => {
-    //   const query = {};
-    //   const email = req.query.email;
-    //   console.log("token mail", req.token_email);
-    //   console.log("just mail", email);
-    //   if (email) {
-    //     if (email !== req.token_email) {
-    //       return res.status(403).send({ message: "Forbidden Access " });
-    //     }
-    //     query.email = email;
-    //   }
-    //   const cursor = bidsCollection.find(query);
-    //   const result = await cursor.toArray();
-    //   res.send(result);
-    // });
-
-    // get all bids and verifyJWTToken
-    app.get("/bids", logger, verifyJwtToken, async (req, res) => {
+    app.get("/bids", logger, verifyFBToken, async (req, res) => {
       const query = {};
       const email = req.query.email;
-      console.log(req.headers.authorization);
+      console.log("token mail", req.token_email);
+      console.log("just mail", email);
       if (email) {
+        if (email !== req.token_email) {
+          return res.status(403).send({ message: "Forbidden Access " });
+        }
         query.email = email;
       }
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    // get all bids and verifyJWTToken
+    // app.get("/bids", logger, verifyJwtToken, async (req, res) => {
+    //   const query = {};
+    //   const email = req.query.email;
+    //   console.log(req.headers.authorization);
+    //   if (email) {
+    //     query.email = email;
+    //   }
+    //   const cursor = bidsCollection.find(query);
+    //   const result = await cursor.toArray();
+    //   res.send(result);
+    // });
 
     // get single bid from db
     app.get("/bids/:id", async (req, res) => {
