@@ -3,7 +3,14 @@ const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const admin = require("firebase-admin");
 const port = process.env.PORT || 3000;
+
+const serviceAccount = require("./dealcraftclient-firebase-adminsdk-e7d95f35c0.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 // middleware
 app.use(cors());
@@ -14,17 +21,23 @@ const logger = (req, res, next) => {
   next();
 };
 
-const verifyFBToken = (req, res, next) => {
+const verifyFBToken = async (req, res, next) => {
   if (!req.headers.authorization) {
-    return res.status(401).send({ message: "Unauthorized Access" });
+    return res.status(401).send({ message: "UnAuthorized Access 26" });
   }
-  console.log("call ho mama");
   const token = req.headers.authorization.split(" ")[1];
   if (!token) {
-    return res.status(401).send({ message: "Unauthorized Access" });
+    return res.status(401).send({ message: "un authorized access" });
   }
-  // verify token here
-  next();
+
+  // verify id token
+  try {
+    const tokenInfo = await admin.auth().verifyIdToken(token);
+    console.log(tokenInfo);
+    next();
+  } catch {
+    return res.status(401).send({ message: "un authorized access catch" });
+  }
 };
 
 //-
