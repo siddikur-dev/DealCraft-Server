@@ -24,7 +24,7 @@ const logger = (req, res, next) => {
 
 const verifyFBToken = async (req, res, next) => {
   if (!req.headers.authorization) {
-    return res.status(401).send({ message: "UnAuthorized Access 26" });
+    req.status(401).send({ message: "UnAuthorized Access" });
   }
   const token = req.headers.authorization.split(" ")[1];
   if (!token) {
@@ -33,32 +33,32 @@ const verifyFBToken = async (req, res, next) => {
 
   // verify id token
   try {
-    const tokenInfo = await admin.auth().verifyIdToken(token);
-    req.token_email = tokenInfo.email;
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.token_email = decoded.email;
     next();
   } catch {
     return res.status(401).send({ message: "un authorized access catch" });
   }
 };
 
-const verifyJwtToken = (req, res, next) => {
-  const authorization = req.headers.authorization;
-  if (!authorization) {
-    return res.status(401).send({ message: "UnAuthorized Access" });
-  }
-  const token = authorization.split(" ")[1];
-  if (!token) {
-    return res.status(401).send({ message: "unauthorized 51 line" });
-  }
+// const verifyJwtToken = (req, res, next) => {
+//   const authorization = req.headers.authorization;
+//   if (!authorization) {
+//     return res.status(401).send({ message: "UnAuthorized Access" });
+//   }
+//   const token = authorization.split(" ")[1];
+//   if (!token) {
+//     return res.status(401).send({ message: "unauthorized 51 line" });
+//   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "UnAuthorized Access" });
-    }
-    // verify token id
-    next();
-  });
-};
+//   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+//     if (err) {
+//       return res.status(401).send({ message: "UnAuthorized Access" });
+//     }
+//     // verify token id
+//     next();
+//   });
+// };
 
 //-
 //
@@ -81,14 +81,14 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
 
     // jsonWebToken related api
-    app.post("/jwtToken", (req, res) => {
-      const loggedUser = req.body;
-      const token = jwt.sign(loggedUser, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.send({ token: token });
-      console.log("jwt token", token);
-    });
+    // app.post("/jwtToken", (req, res) => {
+    //   const loggedUser = req.body;
+    //   const token = jwt.sign(loggedUser, process.env.JWT_SECRET, {
+    //     expiresIn: "1h",
+    //   });
+    //   res.send({ token: token });
+    //   console.log("jwt token", token);
+    // });
 
     // get product from db
     app.get("/products", async (req, res) => {
@@ -131,7 +131,7 @@ async function run() {
       res.send(result);
     });
     // post product to db
-    app.post("/products", async (req, res) => {
+    app.post("/products", verifyFBToken, async (req, res) => {
       console.log("products header", req.headers);
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
