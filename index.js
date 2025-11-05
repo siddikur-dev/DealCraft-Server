@@ -8,7 +8,7 @@ const admin = require("firebase-admin");
 const port = process.env.PORT || 3000;
 
 const serviceAccount = require("./dealcraftclient-firebase-adminsdk-e7d95f35c0.json");
-
+const e = require("express");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -167,11 +167,9 @@ async function run() {
     app.get("/bids", logger, verifyFBToken, async (req, res) => {
       const query = {};
       const email = req.query.email;
-      console.log("token mail", req.token_email);
-      console.log("just mail", email);
       if (email) {
         if (email !== req.token_email) {
-          return res.status(403).send({ message: "Forbidden Access " });
+          req.status(403).send({ message: "forbidden mama" });
         }
         query.email = email;
       }
