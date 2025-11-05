@@ -17,27 +17,29 @@ admin.initializeApp({
 app.use(cors());
 app.use(express.json());
 
-const logger = (req, res, next) => {
-  console.log("logging info");
-  next();
-};
+// const logger = (req, res, next) => {
+//   console.log("logging info");
+//   next();
+// };
 
 const verifyFBToken = async (req, res, next) => {
-  if (!req.headers.authorization) {
-    req.status(401).send({ message: "UnAuthorized Access" });
-  }
-  const token = req.headers.authorization.split(" ")[1];
-  if (!token) {
-    return res.status(401).send({ message: "un authorized access" });
+  const authHeaders = req.headers.authorization;
+  if (!authHeaders) {
+    return res.status(401).send({ message: "Unauthorized Access" });
   }
 
-  // verify id token
+  const token = authHeaders.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access" });
+  }
+
   try {
     const decoded = await admin.auth().verifyIdToken(token);
     req.token_email = decoded.email;
     next();
-  } catch {
-    return res.status(401).send({ message: "un authorized access catch" });
+  } catch (error) {
+    console.error("Token verify error:", error.message);
+    return res.status(403).send({ message: "Forbidden: Invalid Token" });
   }
 };
 
@@ -164,15 +166,17 @@ async function run() {
 
     // get bids related api from bids
     // get all bids from db verify Firebase Token
-    app.get("/bids", logger, verifyFBToken, async (req, res) => {
+    app.get("/bids", verifyFBToken, async (req, res) => {
       const query = {};
       const email = req.query.email;
       if (email) {
         if (email !== req.token_email) {
-          req.status(403).send({ message: "forbidden mama" });
+          return res.status(403).send({ message: "forbidden mama" }); // ✅ ঠিক
         }
+
         query.email = email;
       }
+
       const cursor = bidsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
@@ -201,7 +205,7 @@ async function run() {
 
     // get bids by id from db
     app.get("/products/bids/:productId", verifyFBToken, async (req, res) => {
-      const id = req.params.id;
+      const id = req.params.productId;
       const query = { product: id };
       const cursor = bidsCollection.find(query).sort({ price_min: -1 });
       const result = await cursor.toArray();
