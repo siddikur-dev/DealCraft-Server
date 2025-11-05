@@ -132,6 +132,7 @@ async function run() {
     });
     // post product to db
     app.post("/products", async (req, res) => {
+      console.log("products header", req.headers);
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
       console.log(result);
